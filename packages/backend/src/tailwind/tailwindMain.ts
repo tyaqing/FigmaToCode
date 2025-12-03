@@ -97,7 +97,13 @@ const tailwindWrapSVG = (
     .addData("svg-wrapper")
     .position();
 
-  return `\n<div${builder.build()}>\n${indentString(node.svg ?? "")}</div>`;
+  // 给 SVG 元素添加 data-figma-id 属性，以便后续处理器能够定位
+  let svgWithId = node.svg;
+  if (node.id) {
+    svgWithId = node.svg.replace(/<svg/, `<svg data-figma-id="${node.id}"`);
+  }
+
+  return `\n<div${builder.build()}>\n${indentString(svgWithId)}</div>`;
 };
 
 const tailwindGroup = async (
@@ -114,13 +120,11 @@ const tailwindGroup = async (
     .size()
     .position();
 
-  if (builder.attributes || builder.style) {
-    const attr = builder.build("");
-    const generator = await tailwindWidgetGenerator(node.children, settings);
-    return `\n<div${attr}>${indentString(generator)}\n</div>`;
-  }
-
-  return await tailwindWidgetGenerator(node.children, settings);
+  // 始终生成 div 容器，确保 data-figma-id 被保留
+  // 不再因为没有 attributes 就直接返回子元素
+  const attr = builder.build("");
+  const generator = await tailwindWidgetGenerator(node.children, settings);
+  return `\n<div${attr}>${indentString(generator)}\n</div>`;
 };
 
 export const tailwindText = (
@@ -268,10 +272,8 @@ export const tailwindContainer = (
     .commonPositionStyles()
     .commonShapeStyles();
 
-  if (!builder.attributes && !additionalAttr) {
-    return children;
-  }
-
+  // 始终生成容器元素，确保 data-figma-id 被保留
+  // 不再因为没有 attributes 就直接返回 children
   const build = builder.build(additionalAttr);
 
   // Determine if we should use img tag

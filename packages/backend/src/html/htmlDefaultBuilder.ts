@@ -416,6 +416,27 @@ export class HtmlDefaultBuilder {
     return this;
   }
 
+    /**
+   * 添加 Figma 节点 ID 相关的 data 属性
+   * 这是后处理所需的关键信息，确保每个 HTML 元素都能追溯到原始 Figma 节点
+   */
+    addFigmaNodeData(): this {
+      // 添加 data-figma-id
+      if (this.node.id) {
+        this.addData("figma-id", this.node.id);
+      }
+  
+      // 如果是 INSTANCE 节点，添加主组件 ID
+      if (this.node.type === "INSTANCE" && "mainComponent" in this.node) {
+        const instanceNode = this.node as InstanceNode;
+        if (instanceNode.mainComponent?.id) {
+          this.addData("figma-main-component-id", instanceNode.mainComponent.id);
+        }
+      }
+  
+      return this;
+    }
+
   build(additionalStyle: Array<string> = []): string {
     this.addStyles(...additionalStyle);
 
@@ -430,7 +451,9 @@ export class HtmlDefaultBuilder {
       this.cssClassName
     ) {
       this.storeStyles();
-      return ""; // Return empty string as we're using the component directly
+            // 即使是 styled-components 模式，也要添加 figma-id
+            this.addFigmaNodeData();
+            return this.data.join(""); // Return data attributes for figma-id
     }
 
     let classNames: string[] = [];
@@ -444,7 +467,8 @@ export class HtmlDefaultBuilder {
         }
       }
     }
-
+    // 添加 Figma 节点 ID（用于后处理器追踪）
+    this.addFigmaNodeData();
     if ("componentProperties" in this.node && this.node.componentProperties) {
       Object.entries(this.node.componentProperties)
         ?.map((prop) => {

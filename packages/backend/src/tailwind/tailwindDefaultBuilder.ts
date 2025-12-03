@@ -262,6 +262,27 @@ export class TailwindDefaultBuilder {
     return this;
   }
 
+    /**
+   * 添加 Figma 节点 ID 相关的 data 属性
+   * 这是后处理所需的关键信息，确保每个 HTML 元素都能追溯到原始 Figma 节点
+   */
+    addFigmaNodeData(): this {
+      // 添加 data-figma-id
+      if (this.node.id) {
+        this.addData("figma-id", this.node.id);
+      }
+  
+      // 如果是 INSTANCE 节点，添加主组件 ID
+      if (this.node.type === "INSTANCE" && "mainComponent" in this.node) {
+        const instanceNode = this.node as InstanceNode;
+        if (instanceNode.mainComponent?.id) {
+          this.addData("figma-main-component-id", instanceNode.mainComponent.id);
+        }
+      }
+  
+      return this;
+    }
+
   build(additionalAttr = ""): string {
     if (additionalAttr) {
       this.addAttributes(additionalAttr);
@@ -273,6 +294,9 @@ export class TailwindDefaultBuilder {
     if (this.name) {
       this.addData("layer", this.name.trim());
     }
+
+      // 添加 Figma 节点 ID（用于后处理器追踪）
+      this.addFigmaNodeData();
 
     if ("componentProperties" in this.node && this.node.componentProperties) {
       Object.entries(this.node.componentProperties)
@@ -294,6 +318,16 @@ export class TailwindDefaultBuilder {
         .forEach((d) => this.data.push(d));
     }
 
+    // 注入 data-figma-id 属性，用于后续处理器定位节点
+    let figmaIdAttr = "";
+    if (this.node.id) {
+      figmaIdAttr += ` data-figma-id="${this.node.id}"`;
+    }
+    // 对于 INSTANCE 节点，额外注入 mainComponentId
+    if (this.node.type === "INSTANCE" && (this.node as InstanceNode).mainComponentId) {
+      figmaIdAttr += ` data-figma-main-component-id="${(this.node as InstanceNode).mainComponentId}"`;
+    }
+
     const classLabel = getClassLabel(this.isJSX);
     const classNames =
       this.attributes.length > 0
@@ -302,7 +336,7 @@ export class TailwindDefaultBuilder {
     const styles = this.style.length > 0 ? ` style="${this.style}"` : "";
     const dataAttributes = this.data.join("");
 
-    return `${dataAttributes}${classNames}${styles}`;
+    return `${figmaIdAttr}${dataAttributes}${classNames}${styles}`;
   }
 
   reset(): void {
