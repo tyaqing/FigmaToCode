@@ -309,7 +309,13 @@ const processNodePair = async (
   }
 
   // Inline all GROUP nodes by processing their children directly
-  if (nodeType === "GROUP" && jsonNode.children) {
+  // 可配置：当 preserveGroupLayers 为 true 时，保留 GROUP 容器以匹配 Figma 层级
+  const shouldInlineGroup =
+    nodeType === "GROUP" &&
+    jsonNode.children &&
+    settings.preserveGroupLayers !== true;
+
+  if (shouldInlineGroup) {
     const processedChildren = [];
 
     if (

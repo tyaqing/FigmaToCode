@@ -7,6 +7,12 @@ export interface HTMLSettings {
   embedVectors: boolean;
   useColorVariables: boolean;
   htmlGenerationMode: "html" | "jsx" | "styled-components" | "svelte";
+  /**
+   * 是否保留 Figma 中的 GROUP 层级。
+   * 默认 false（兼容旧行为：内联 GROUP 以减少 DOM 层级）
+   * 设为 true 时，生成的 HTML 将严格保留 GROUP 容器，保持层级一致。
+   */
+  preserveGroupLayers?: boolean;
 }
 export interface TailwindSettings extends HTMLSettings {
   tailwindGenerationMode: "html" | "jsx" | "twig";
