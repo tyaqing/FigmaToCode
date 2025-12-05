@@ -444,11 +444,17 @@ const htmlWrapSVG = (
     .addData("svg-wrapper")
     .position();
 
+  // 为 SVG 注入 data-figma-id，便于后处理器定位（与 tailwind 生成保持一致）
+  let svgWithId = node.svg ?? "";
+  if (node.id) {
+    svgWithId = svgWithId.replace(/<svg/, `<svg data-figma-id="${node.id}"`);
+  }
+
   // The SVG content already has the var() references, so we don't need
   // to add inline CSS variables in most cases. The browser will use the fallbacks
   // if the variables aren't defined in the CSS.
 
-  return `\n<div${builder.build()}>\n${indentString(node.svg ?? "")}</div>`;
+  return `\n<div${builder.build()}>\n${indentString(svgWithId)}</div>`;
 };
 
 const htmlGroup = async (
